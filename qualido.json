@@ -1,0 +1,276 @@
+{
+  "job_id": "036dab9a",
+  "addon_name": "Allo: AI Second Business Phone",
+  "addon_version": "17.0.1.0.0",
+  "addon_category": "Phone/Integration",
+  "addon_author": "The Mobile-First Company",
+  "addon_website": "https://www.withallo.com/integrations/odoo",
+  "odoo_version": "17.0",
+  "overall_score": 83,
+  "grade": "Very Good",
+  "agent_results": [
+    {
+      "agent_name": "documentation",
+      "display_name": "Documentation",
+      "score": 90,
+      "findings": [
+        {
+          "message": "No README file found",
+          "severity": "major",
+          "category": "documentation",
+          "file_path": null,
+          "line_number": null,
+          "suggestion": "Create README.md with installation instructions and usage examples",
+          "ignored": false
+        }
+      ],
+      "recommendations": [
+        "Create a comprehensive README.md with installation and usage instructions"
+      ],
+      "critical_count": 0,
+      "major_count": 1,
+      "minor_count": 0,
+      "info_count": 0,
+      "execution_time": null,
+      "error": null
+    },
+    {
+      "agent_name": "manifest",
+      "display_name": "Manifest",
+      "score": 50,
+      "findings": [
+        {
+          "message": "Missing required field: 'depends'",
+          "severity": "critical",
+          "category": "manifest",
+          "file_path": "__manifest__.py",
+          "line_number": null,
+          "suggestion": "Add 'depends': ... to manifest - List of module dependencies",
+          "ignored": false
+        },
+        {
+          "message": "No dependencies declared",
+          "severity": "major",
+          "category": "manifest",
+          "file_path": "__manifest__.py",
+          "line_number": null,
+          "suggestion": "Most modules depend on at least 'base'",
+          "ignored": false
+        },
+        {
+          "message": "Declared data file not found: security/ir.model.access.csv",
+          "severity": "critical",
+          "category": "manifest",
+          "file_path": "__manifest__.py",
+          "line_number": null,
+          "suggestion": "Create security/ir.model.access.csv or remove from 'data' list",
+          "ignored": false
+        }
+      ],
+      "recommendations": [
+        "Consider adding 'maintainers' field for OCA-style maintenance tracking",
+        "Consider adding 'development_status' (Alpha/Beta/Production/Mature)",
+        "Document external dependencies in README.md with installation instructions"
+      ],
+      "critical_count": 2,
+      "major_count": 1,
+      "minor_count": 0,
+      "info_count": 0,
+      "execution_time": null,
+      "error": null
+    },
+    {
+      "agent_name": "orm_patterns",
+      "display_name": "ORM Patterns",
+      "score": 100,
+      "findings": [],
+      "recommendations": [
+        "ORM patterns look good - continue following Odoo best practices"
+      ],
+      "critical_count": 0,
+      "major_count": 0,
+      "minor_count": 0,
+      "info_count": 0,
+      "execution_time": null,
+      "error": null
+    },
+    {
+      "agent_name": "performance",
+      "display_name": "Performance",
+      "score": 100,
+      "findings": [],
+      "recommendations": [
+        "No major performance issues detected - code appears ready for large datasets"
+      ],
+      "critical_count": 0,
+      "major_count": 0,
+      "minor_count": 0,
+      "info_count": 0,
+      "execution_time": null,
+      "error": null
+    },
+    {
+      "agent_name": "python_quality",
+      "display_name": "Python Quality",
+      "score": 100,
+      "findings": [],
+      "recommendations": [],
+      "critical_count": 0,
+      "major_count": 0,
+      "minor_count": 0,
+      "info_count": 0,
+      "execution_time": null,
+      "error": null
+    },
+    {
+      "agent_name": "security",
+      "display_name": "Security",
+      "score": 100,
+      "findings": [],
+      "recommendations": [
+        "No security issues found - continue following security best practices"
+      ],
+      "critical_count": 0,
+      "major_count": 0,
+      "minor_count": 0,
+      "info_count": 0,
+      "execution_time": null,
+      "error": null
+    },
+    {
+      "agent_name": "structure",
+      "display_name": "Structure",
+      "score": 71,
+      "findings": [
+        {
+          "message": "Missing required file: __init__.py",
+          "severity": "critical",
+          "category": "structure",
+          "file_path": null,
+          "line_number": null,
+          "suggestion": "Create __init__.py - Python package initialization",
+          "ignored": false
+        },
+        {
+          "message": "Missing recommended: models/",
+          "severity": "minor",
+          "category": "structure",
+          "file_path": null,
+          "line_number": null,
+          "suggestion": "Consider adding models/ - Business logic models",
+          "ignored": false
+        },
+        {
+          "message": "Missing recommended: security/",
+          "severity": "minor",
+          "category": "structure",
+          "file_path": null,
+          "line_number": null,
+          "suggestion": "Consider adding security/ - Access control definitions",
+          "ignored": false
+        },
+        {
+          "message": "Missing recommended: README.md",
+          "severity": "minor",
+          "category": "structure",
+          "file_path": null,
+          "line_number": null,
+          "suggestion": "Consider adding README.md - Module documentation",
+          "ignored": false
+        }
+      ],
+      "recommendations": [
+        "Fix critical structural issues before publishing this addon",
+        "Add a tests/ directory with unit tests for your models",
+        "Consider adding i18n/ directory for translations"
+      ],
+      "critical_count": 1,
+      "major_count": 0,
+      "minor_count": 3,
+      "info_count": 0,
+      "execution_time": null,
+      "error": null
+    },
+    {
+      "agent_name": "test_coverage",
+      "display_name": "Test Coverage",
+      "score": 0,
+      "findings": [
+        {
+          "message": "No tests/ directory found",
+          "severity": "critical",
+          "category": "test_coverage",
+          "file_path": null,
+          "line_number": null,
+          "suggestion": "Create tests/ directory with test files",
+          "ignored": false
+        }
+      ],
+      "recommendations": [
+        "Create a tests/ directory with __init__.py and test files",
+        "Use Odoo's TransactionCase or SavepointCase as base classes for tests"
+      ],
+      "critical_count": 1,
+      "major_count": 0,
+      "minor_count": 0,
+      "info_count": 0,
+      "execution_time": null,
+      "error": null
+    },
+    {
+      "agent_name": "views_frontend",
+      "display_name": "Views & Frontend",
+      "score": 100,
+      "findings": [],
+      "recommendations": [
+        "Views look good - following Odoo best practices"
+      ],
+      "critical_count": 0,
+      "major_count": 0,
+      "minor_count": 0,
+      "info_count": 0,
+      "execution_time": null,
+      "error": null
+    }
+  ],
+  "summary": "This addon is well-structured with minor improvements suggested. Found 4 critical issue(s) that must be fixed. Attention needed: test_coverage scored 0/100",
+  "top_issues": [
+    {
+      "message": "Missing required field: 'depends'",
+      "severity": "critical",
+      "category": "",
+      "file_path": "__manifest__.py",
+      "line_number": null,
+      "suggestion": "Add 'depends': ... to manifest - List of module dependencies",
+      "ignored": false
+    },
+    {
+      "message": "Declared data file not found: security/ir.model.access.csv",
+      "severity": "critical",
+      "category": "",
+      "file_path": "__manifest__.py",
+      "line_number": null,
+      "suggestion": "Create security/ir.model.access.csv or remove from 'data' list",
+      "ignored": false
+    },
+    {
+      "message": "Missing required file: __init__.py",
+      "severity": "critical",
+      "category": "",
+      "file_path": null,
+      "line_number": null,
+      "suggestion": "Create __init__.py - Python package initialization",
+      "ignored": false
+    },
+    {
+      "message": "No tests/ directory found",
+      "severity": "critical",
+      "category": "",
+      "file_path": null,
+      "line_number": null,
+      "suggestion": "Create tests/ directory with test files",
+      "ignored": false
+    }
+  ],
+  "analyzed_at": "2026-02-19T23:38:23.717531"
+}
