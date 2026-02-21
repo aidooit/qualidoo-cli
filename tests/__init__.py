@@ -1,0 +1,1 @@
+# Qualidoo CLI test suite

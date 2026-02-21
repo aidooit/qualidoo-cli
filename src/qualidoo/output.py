@@ -222,6 +222,10 @@ def print_user_info(user_info: dict[str, Any]) -> None:
     """Print user authentication info in a styled panel."""
     email = user_info.get("email", "Unknown")
     tier = user_info.get("tier", "Unknown")
+    analyses_this_month = user_info.get("analyses_this_month", 0)
+    analyses_limit = user_info.get("analyses_limit")
+    api_requests_today = user_info.get("api_requests_today", 0)
+    api_limit = user_info.get("api_limit")
 
     tier_colors = {
         "free": "dim",
@@ -231,11 +235,21 @@ def print_user_info(user_info: dict[str, Any]) -> None:
     }
     tier_style = tier_colors.get(tier.lower(), "white")
 
+    # Format analyses limit
+    analyses_limit_str = "unlimited" if analyses_limit is None else str(analyses_limit)
+
+    # Format API limit
+    api_limit_str = "unlimited" if api_limit is None else str(api_limit)
+
     content = Text()
-    content.append("Logged in as: ", style="bold")
+    content.append("Email: ", style="bold")
     content.append(f"{email}\n")
     content.append("Tier: ", style="bold")
-    content.append(f"{tier.title()}", style=tier_style)
+    content.append(f"{tier.upper()}\n", style=tier_style)
+    content.append("Analyses this month: ", style="bold")
+    content.append(f"{analyses_this_month} / {analyses_limit_str}\n")
+    content.append("API calls today: ", style="bold")
+    content.append(f"{api_requests_today} / {api_limit_str}")
 
     panel = Panel(
         content,
