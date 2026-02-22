@@ -1,1 +1,1 @@
-# Qualidoo CLI test suite
+"""Tests for the Qualidoo CLI."""

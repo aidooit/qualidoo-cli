@@ -303,3 +303,214 @@ def create_progress_callback() -> Any:
     callback.stop = lambda: progress.stop() if started else None  # type: ignore[attr-defined]
 
     return callback
+
+
+# =============================================================================
+# Repository Scan Output
+# =============================================================================
+
+
+def print_integrations(integrations: list[dict[str, Any]]) -> None:
+    """Print integration status."""
+    if not integrations:
+        console.print("[dim]No integrations connected.[/dim]")
+        console.print()
+        console.print(
+            "Connect GitHub at: "
+            "[link=https://qualidoo.aidooit.com/settings/integrations]"
+            "qualidoo.aidooit.com/settings/integrations[/link]"
+        )
+        return
+
+    for integration in integrations:
+        provider = integration.get("provider", "unknown")
+        username = integration.get("provider_username", "")
+        is_active = integration.get("is_active", False)
+
+        if provider == "github":
+            if is_active:
+                console.print(f"[green]GitHub:[/green] Connected (@{username})")
+            else:
+                console.print("[red]GitHub:[/red] Disconnected")
+        else:
+            status_color = "green" if is_active else "red"
+            status_text = "Connected" if is_active else "Disconnected"
+            console.print(f"[{status_color}]{provider.title()}:[/{status_color}] {status_text}")
+
+
+def create_repo_progress_callback(repo: str) -> Any:
+    """Create a progress callback for repo scan polling with live display.
+
+    Args:
+        repo: Repository name for display.
+
+    Returns:
+        Callback function with progress tracking.
+    """
+    from rich.live import Live
+    from rich.progress import BarColumn, Progress, SpinnerColumn, TaskID, TextColumn
+
+    progress = Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(bar_width=30),
+        TextColumn("{task.completed}/{task.total}"),
+        console=console,
+    )
+
+    live = Live(progress, console=console, refresh_per_second=4)
+
+    task_id: TaskID | None = None
+    started = False
+    completed_addons: set[str] = set()
+
+    def callback(status: dict[str, Any]) -> None:
+        nonlocal task_id, started, completed_addons
+
+        scan_status = status.get("status", "unknown")
+        total = status.get("total_addons", 0)
+        analyzed = status.get("analyzed_addons", 0)
+        failed = status.get("failed_addons", 0)
+
+        if not started:
+            live.start()
+            task_id = progress.add_task(f"Scanning {repo}...", total=total or 1)
+            started = True
+
+        # Update progress
+        if task_id is not None:
+            completed = analyzed + failed
+            if total > 0:
+                progress.update(task_id, completed=completed, total=total)
+
+            # Update description based on status
+            if scan_status == "discovering":
+                progress.update(task_id, description="Discovering addons...")
+            elif scan_status == "analyzing":
+                # Find currently analyzing addon
+                results = status.get("results", [])
+                analyzing = [r for r in results if r.get("status") == "analyzing"]
+                if analyzing:
+                    current = analyzing[0].get("name", "")
+                    progress.update(task_id, description=f"Analyzing {current}...")
+                else:
+                    progress.update(task_id, description="Analyzing addons...")
+            elif scan_status == "completed":
+                progress.update(task_id, description="Scan completed")
+
+    callback.live = live  # type: ignore[attr-defined]
+    callback.progress = progress  # type: ignore[attr-defined]
+    callback.stop = lambda: live.stop() if started else None  # type: ignore[attr-defined]
+
+    return callback
+
+
+def print_repo_results(
+    scan_result: dict[str, Any],
+    repo: str,
+    verbose: bool = False,
+) -> None:
+    """Print repository scan results.
+
+    Args:
+        scan_result: Scan status dict from API.
+        repo: Repository name for display.
+        verbose: If True, show detailed per-addon findings.
+    """
+    status = scan_result.get("status", "unknown")
+    results = scan_result.get("results", [])
+    total = scan_result.get("total_addons", 0)
+    analyzed = scan_result.get("analyzed_addons", 0)
+    failed = scan_result.get("failed_addons", 0)
+
+    # Header
+    console.print()
+    console.print(f"[bold]Repository:[/bold] {repo}")
+    console.print(f"[bold]Status:[/bold] {status}")
+    console.print(f"[bold]Addons:[/bold] {analyzed} analyzed, {failed} failed, {total} total")
+    console.print()
+
+    if not results:
+        console.print("[dim]No addons analyzed.[/dim]")
+        return
+
+    # Build results table
+    table = Table(show_header=True, header_style="bold")
+    table.add_column("Addon", style="cyan", min_width=30)
+    table.add_column("Score", justify="right", min_width=6)
+    table.add_column("Grade", justify="center", min_width=6)
+    table.add_column("Critical", justify="right", min_width=8)
+    table.add_column("Major", justify="right", min_width=6)
+    table.add_column("Status", min_width=10)
+
+    # Sort by score (descending), then by name
+    sorted_results = sorted(
+        results,
+        key=lambda r: (-(r.get("score") or 0), r.get("name", "")),
+    )
+
+    for result in sorted_results:
+        name = result.get("name", "unknown")
+        addon_status = result.get("status", "unknown")
+        score = result.get("score")
+        grade = result.get("grade", "")
+        critical = result.get("critical_count", 0)
+        major = result.get("major_count", 0)
+        error = result.get("error_message")
+
+        # Format score
+        if score is not None:
+            score_color = "green" if score >= 80 else "yellow" if score >= 60 else "red"
+            score_text = Text(str(score), style=score_color)
+        else:
+            score_text = Text("-", style="dim")
+
+        # Format grade
+        grade_color = GRADE_COLORS.get(grade, "white")
+        grade_text = Text(grade, style=grade_color) if grade else Text("-", style="dim")
+
+        # Format status
+        if addon_status == "completed":
+            status_text = Text("Done", style="green")
+        elif addon_status == "failed":
+            status_text = Text("Failed", style="red")
+        elif addon_status == "analyzing":
+            status_text = Text("Running", style="yellow")
+        else:
+            status_text = Text(addon_status, style="dim")
+
+        # Format counts
+        critical_text = Text(str(critical), style="red") if critical > 0 else Text("-", style="dim")
+        major_text = Text(str(major), style="yellow") if major > 0 else Text("-", style="dim")
+
+        table.add_row(name, score_text, grade_text, critical_text, major_text, status_text)
+
+        # Show error if failed
+        if error and addon_status == "failed":
+            console.print(f"  [dim]{name}:[/dim] [red]{error}[/red]")
+
+    console.print(table)
+    console.print()
+
+    # Summary stats
+    completed_results = [r for r in results if r.get("status") == "completed" and r.get("score") is not None]
+    if completed_results:
+        scores = [r["score"] for r in completed_results]
+        avg_score = sum(scores) / len(scores)
+        min_score = min(scores)
+        max_score = max(scores)
+
+        console.print(f"[bold]Average score:[/bold] {avg_score:.1f}")
+        console.print(f"[bold]Score range:[/bold] {min_score} - {max_score}")
+        console.print()
+
+    # Verbose mode: show per-addon details
+    if verbose:
+        console.print("[dim]Use 'qualidoo history' to view detailed results for each addon.[/dim]")
+        console.print()
+
+    # Dashboard link
+    console.print(
+        "[dim]View full reports on your dashboard:[/dim] "
+        "[link=https://qualidoo.aidooit.com]https://qualidoo.aidooit.com[/link]"
+    )

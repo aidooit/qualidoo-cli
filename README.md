@@ -12,6 +12,7 @@ Qualidoo CLI is a command-line tool for analyzing Odoo addon quality. It uploads
 
 Features:
 - Analyze addons from any directory
+- **Scan GitHub repositories** for Odoo addons (requires GitHub connection via web UI)
 - View results with detailed findings and recommendations
 - Save analysis results as JSON for CI/CD integration
 - Progress feedback during analysis
@@ -169,6 +170,88 @@ qualidoo config -s        # Short form
 
 Displays the configuration file path and current settings (API key is masked).
 
+### `qualidoo integrations`
+
+Show connected integrations (GitHub, etc.).
+
+```bash
+qualidoo integrations
+```
+
+Displays the status of your connected integrations. GitHub must be connected via the web UI at https://qualidoo.aidooit.com/settings/integrations before using `qualidoo repo` commands.
+
+### `qualidoo repo check`
+
+Analyze Odoo addons directly from a GitHub repository.
+
+```bash
+qualidoo repo check <REPO> [OPTIONS]
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `REPO` | GitHub repository (owner/repo format or full URL) |
+
+**Options:**
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--branch TEXT` | `-b` | Branch to analyze (defaults to repository default) |
+| `--addon TEXT` | `-a` | Analyze only this specific addon |
+| `--verbose` | `-v` | Show detailed output |
+| `--save FILE` | `-s` | Save results to JSON file |
+| `--timeout SECONDS` | `-t` | Maximum time to wait for analysis (default: 600) |
+
+**Examples:**
+
+```bash
+# Analyze all addons in a repository
+qualidoo repo check oca/account-financial-tools
+
+# Analyze a specific branch
+qualidoo repo check oca/account-financial-tools --branch 16.0
+
+# Analyze using full GitHub URL
+qualidoo repo check https://github.com/owner/repo
+
+# Analyze a single addon
+qualidoo repo check owner/repo --addon account_invoice_validation
+
+# Save results for CI/CD
+qualidoo repo check owner/repo --save results.json
+
+# Combine options
+qualidoo repo check oca/account-financial-tools -b 16.0 -v -s analysis.json
+```
+
+**Prerequisites:**
+
+Before using `qualidoo repo check`, you must connect your GitHub account:
+
+1. Visit https://qualidoo.aidooit.com/settings/integrations
+2. Click "Connect GitHub"
+3. Authorize Qualidoo to access your repositories
+4. Verify connection with `qualidoo integrations`
+
+**Output:**
+
+The command displays:
+- Discovery progress (finding addons in the repository)
+- Analysis progress with a progress bar
+- Results table showing each addon's score, grade, and issue counts
+- Summary statistics (average score, score range)
+
+**Supported Repository Formats:**
+
+| Format | Example |
+|--------|---------|
+| owner/repo | `oca/account-financial-tools` |
+| HTTPS URL | `https://github.com/oca/account-financial-tools` |
+| HTTPS with .git | `https://github.com/oca/account-financial-tools.git` |
+| SSH URL | `git@github.com:oca/account-financial-tools.git` |
+
 ## Configuration
 
 ### Config File Location
@@ -223,6 +306,10 @@ Use the CLI in your CI/CD pipeline to enforce quality standards:
 | "Rate limit exceeded" | Too many API requests | Wait and try again later |
 | "Not a valid Odoo addon" | Missing `__manifest__.py` | Ensure path points to valid addon |
 | "Analysis timed out" | Server processing took too long | Increase `--timeout` or try again |
+| "GitHub not connected" | No GitHub integration | Connect at qualidoo.aidooit.com/settings/integrations |
+| "Repository not found" | Invalid repo or no access | Check repo name and GitHub permissions |
+| "No Odoo addons found" | Repo has no `__manifest__.py` files | Ensure repo contains Odoo addons |
+| "Addon not found in repository" | Specified addon doesn't exist | Check addon name with `--verbose` |
 
 ### Exit Codes
 
@@ -281,7 +368,8 @@ tests/
 ├── test_config.py       # Configuration module tests (~22 tests)
 ├── test_api_client.py   # API client tests (~34 tests)
 ├── test_output.py       # Output formatting tests (~25 tests)
-└── test_cli.py          # CLI command tests (~21 tests)
+├── test_cli.py          # CLI command tests (~21 tests)
+└── test_github.py       # GitHub URL parsing tests (~14 tests)
 ```
 
 ### Test Coverage
@@ -289,9 +377,10 @@ tests/
 The test suite covers:
 
 - **Configuration** (`test_config.py`): API key validation, config file operations, environment variable handling
-- **API Client** (`test_api_client.py`): HTTP requests, error handling, file uploads, job polling
+- **API Client** (`test_api_client.py`): HTTP requests, error handling, file uploads, job polling, GitHub repo scanning
 - **Output** (`test_output.py`): Grade calculations, terminal formatting, progress callbacks
 - **CLI** (`test_cli.py`): All commands (login, logout, whoami, check, config) with various scenarios
+- **GitHub** (`test_github.py`): Repository URL parsing for various formats
 
 ### Dev Dependencies
 

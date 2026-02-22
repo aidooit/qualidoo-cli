@@ -26,15 +26,20 @@ from qualidoo.output import (
     print_analysis_result,
     print_config_info,
     print_error,
+    print_integrations,
     print_success,
     print_user_info,
 )
+from qualidoo.repo_commands import repo_app
 
 app = typer.Typer(
     name="qualidoo",
     help="AI-powered Odoo addon quality analyzer",
     no_args_is_help=True,
 )
+
+# Register subcommands
+app.add_typer(repo_app, name="repo")
 
 
 @app.callback()
@@ -286,6 +291,41 @@ def config(
         # Default behavior: show config
         cfg = load_config()
         print_config_info(cfg, str(get_config_path()))
+
+
+@app.command()
+def integrations() -> None:
+    """Show connected integrations (GitHub, etc.)."""
+    api_key = get_api_key()
+
+    if not api_key:
+        print_error("Not logged in. Run 'qualidoo login' first.")
+        raise typer.Exit(1)
+
+    console.print("Checking integrations...", end=" ")
+    try:
+        with QualidooClient(api_key=api_key) as client:
+            integrations_list = client.get_integrations()
+    except AuthenticationError:
+        console.print("[red]Failed[/red]")
+        print_error("Authentication failed. Run 'qualidoo login' to reconfigure.")
+        raise typer.Exit(1)
+    except ForbiddenError as e:
+        console.print("[red]Failed[/red]")
+        print_error(e.message)
+        raise typer.Exit(1)
+    except APIError as e:
+        console.print("[red]Failed[/red]")
+        print_error(f"API error: {e.message}")
+        raise typer.Exit(1)
+    except Exception as e:
+        console.print("[red]Failed[/red]")
+        print_error(f"Connection error: {e}")
+        raise typer.Exit(1)
+
+    console.print("[green]OK[/green]")
+    console.print()
+    print_integrations(integrations_list)
 
 
 if __name__ == "__main__":
