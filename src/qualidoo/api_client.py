@@ -260,3 +260,155 @@ class QualidooClient:
             else:
                 # Unknown status, keep polling
                 time.sleep(poll_interval)
+
+    # =========================================================================
+    # GitHub Repository Methods
+    # =========================================================================
+
+    def get_github_status(self) -> dict[str, Any]:
+        """Check if the user has GitHub connected.
+
+        Returns:
+            Dict with 'connected', 'username', and 'message' fields.
+
+        Raises:
+            APIError: For API errors.
+        """
+        response = self.client.get("/api/v1/cli/github/status")
+        return self._handle_response(response)
+
+    def discover_addons(
+        self,
+        owner: str,
+        repo: str,
+        branch: str | None = None,
+    ) -> dict[str, Any]:
+        """Discover Odoo addons in a GitHub repository.
+
+        Args:
+            owner: Repository owner.
+            repo: Repository name.
+            branch: Branch to scan (defaults to repo default branch).
+
+        Returns:
+            Dict with 'repo', 'branch', 'addons', and 'total' fields.
+
+        Raises:
+            APIError: For API errors.
+            NotFoundError: If repository not found.
+        """
+        url = f"/api/v1/cli/github/repos/{owner}/{repo}/addons"
+        params = {}
+        if branch:
+            params["branch"] = branch
+        response = self.client.get(url, params=params)
+        return self._handle_response(response)
+
+    def start_repo_analysis(
+        self,
+        repo: str,
+        branch: str | None = None,
+        addon_path: str | None = None,
+        use_llm: bool = False,
+    ) -> dict[str, Any]:
+        """Start analysis of addons in a GitHub repository.
+
+        Args:
+            repo: Repository in 'owner/repo' format.
+            branch: Branch to analyze (defaults to repo default branch).
+            addon_path: Specific addon path to analyze, or all if None.
+            use_llm: Enable LLM-enhanced analysis.
+
+        Returns:
+            Dict with 'scan_id' and 'total_addons' fields.
+
+        Raises:
+            APIError: For API errors.
+            NotFoundError: If repository or addon not found.
+        """
+        payload: dict[str, Any] = {"repo": repo}
+        if branch:
+            payload["branch"] = branch
+        if addon_path:
+            payload["addon_path"] = addon_path
+        payload["use_llm"] = use_llm
+
+        response = self.client.post("/api/v1/cli/github/analyze", json=payload)
+        return self._handle_response(response)
+
+    def get_scan_status(self, scan_id: str) -> dict[str, Any]:
+        """Get the status of a repository scan with per-addon results.
+
+        Args:
+            scan_id: The scan ID returned from start_repo_analysis.
+
+        Returns:
+            Dict with scan status and per-addon results.
+
+        Raises:
+            APIError: For API errors.
+            NotFoundError: If scan not found.
+        """
+        response = self.client.get(f"/api/v1/cli/github/scans/{scan_id}")
+        return self._handle_response(response)
+
+    def wait_for_scan_completion(
+        self,
+        scan_id: str,
+        poll_interval: float = 2.0,
+        timeout: float = 600.0,
+        progress_callback: Any = None,
+    ) -> dict[str, Any]:
+        """Poll until scan completes and return the final status.
+
+        Args:
+            scan_id: The scan ID to wait for.
+            poll_interval: Seconds between status checks.
+            timeout: Maximum seconds to wait.
+            progress_callback: Optional callback(status_dict) called on each poll.
+
+        Returns:
+            Final scan status dict with all results.
+
+        Raises:
+            TimeoutError: If scan doesn't complete within timeout.
+            APIError: If scan fails or other API error.
+        """
+        start_time = time.time()
+
+        while True:
+            if time.time() - start_time > timeout:
+                raise TimeoutError(
+                    f"Scan {scan_id} did not complete within {timeout} seconds. "
+                    "Try with --addon to analyze a single module."
+                )
+
+            status = self.get_scan_status(scan_id)
+
+            if progress_callback:
+                progress_callback(status)
+
+            scan_status = status.get("status", "").lower()
+
+            if scan_status == "completed":
+                return status
+            elif scan_status == "failed":
+                error = status.get("error_message", "Unknown error")
+                raise APIError(f"Scan failed: {error}")
+            elif scan_status in ("pending", "discovering", "analyzing"):
+                time.sleep(poll_interval)
+            else:
+                # Unknown status, keep polling
+                time.sleep(poll_interval)
+
+    def get_integrations(self) -> list[dict[str, Any]]:
+        """Get all integrations for the current user.
+
+        Returns:
+            List of integration dicts.
+
+        Raises:
+            APIError: For API errors.
+        """
+        response = self.client.get("/api/v1/integrations")
+        return self._handle_response(response)
