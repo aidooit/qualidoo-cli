@@ -165,9 +165,9 @@ class QualidooClient:
 
         zip_buffer.seek(0)
 
-        # Upload
+        # Upload (with client=cli to identify CLI uploads)
         files = {"file": (f"{addon_name}.zip", zip_buffer, "application/zip")}
-        response = self.client.post("/api/v1/analyze/upload", files=files)
+        response = self.client.post("/api/v1/analyze/upload", files=files, params={"client": "cli"})
         return self._handle_response(response)
 
     def _should_skip_file(self, file_path: Path) -> bool:
