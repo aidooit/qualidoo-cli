@@ -143,11 +143,16 @@ class QualidooClient:
         response = self.client.get("/api/v1/auth/me")
         return self._handle_response(response)
 
-    def upload_addon(self, addon_path: Path) -> dict[str, Any]:
+    def upload_addon(
+        self,
+        addon_path: Path,
+        project_id: str | None = None,
+    ) -> dict[str, Any]:
         """Upload an addon for analysis.
 
         Args:
             addon_path: Path to the addon directory.
+            project_id: Optional project ID to attribute the scan to.
 
         Returns:
             Dict containing job_id and other info.
@@ -177,9 +182,14 @@ class QualidooClient:
 
         zip_buffer.seek(0)
 
+        # Build params
+        params: dict[str, str] = {"client": "cli"}
+        if project_id:
+            params["project_id"] = project_id
+
         # Upload (with client=cli to identify CLI uploads)
         files = {"file": (f"{addon_name}.zip", zip_buffer, "application/zip")}
-        response = self.client.post("/api/v1/analyze/upload", files=files, params={"client": "cli"})
+        response = self.client.post("/api/v1/analyze/upload", files=files, params=params)
         return self._handle_response(response)
 
     def _should_skip_file(self, file_path: Path) -> bool:
@@ -322,6 +332,7 @@ class QualidooClient:
         branch: str | None = None,
         addon_path: str | None = None,
         use_llm: bool = False,
+        project_id: str | None = None,
     ) -> dict[str, Any]:
         """Start analysis of addons in a GitHub repository.
 
@@ -330,6 +341,7 @@ class QualidooClient:
             branch: Branch to analyze (defaults to repo default branch).
             addon_path: Specific addon path to analyze, or all if None.
             use_llm: Enable LLM-enhanced analysis.
+            project_id: Optional project ID to attribute scans to.
 
         Returns:
             Dict with 'scan_id' and 'total_addons' fields.
@@ -344,6 +356,8 @@ class QualidooClient:
         if addon_path:
             payload["addon_path"] = addon_path
         payload["use_llm"] = use_llm
+        if project_id:
+            payload["project_id"] = project_id
 
         response = self.client.post("/api/v1/cli/github/analyze", json=payload)
         return self._handle_response(response)
@@ -423,4 +437,43 @@ class QualidooClient:
             APIError: For API errors.
         """
         response = self.client.get("/api/v1/integrations")
+        return self._handle_response(response)
+
+    # =========================================================================
+    # Organization & Project Methods
+    # =========================================================================
+
+    def get_organizations(self) -> dict[str, Any]:
+        """Get all organizations the user is a member of, with their projects.
+
+        Returns:
+            Dict with 'organizations' list, each containing 'projects' list.
+
+        Raises:
+            APIError: For API errors.
+        """
+        response = self.client.get("/api/v1/cli/organizations")
+        return self._handle_response(response)
+
+    def create_project(
+        self,
+        name: str,
+        organization_id: str,
+    ) -> dict[str, Any]:
+        """Create a new project in an organization.
+
+        Args:
+            name: Name of the project.
+            organization_id: ID of the organization to create the project in.
+
+        Returns:
+            Dict with project 'id' and 'name'.
+
+        Raises:
+            APIError: For API errors.
+        """
+        response = self.client.post(
+            "/api/v1/projects",
+            json={"name": name, "organization_id": organization_id},
+        )
         return self._handle_response(response)

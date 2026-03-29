@@ -15,6 +15,7 @@ from qualidoo.api_client import (
 from qualidoo.config import (
     get_api_key,
     get_config_path,
+    get_context,
     load_config,
     remove_api_key,
     set_api_key,
@@ -30,7 +31,9 @@ from qualidoo.output import (
     print_success,
     print_user_info,
 )
+from qualidoo.org_resolver import OrgProjectResolverError, resolve_org_project
 from qualidoo.repo_commands import repo_app
+from qualidoo.org_commands import org_app
 
 app = typer.Typer(
     name="qualidoo",
@@ -40,6 +43,7 @@ app = typer.Typer(
 
 # Register subcommands
 app.add_typer(repo_app, name="repo")
+app.add_typer(org_app, name="org")
 
 
 @app.callback()
@@ -185,10 +189,27 @@ def check(
             help="Save full JSON result to file (e.g., result.json or /path/to/result.json)",
         ),
     ] = None,
+    org: Annotated[
+        Optional[str],
+        typer.Option(
+            "--org",
+            "-o",
+            help="Organization name/ID to attribute scan to (overrides context)",
+        ),
+    ] = None,
+    project: Annotated[
+        Optional[str],
+        typer.Option(
+            "--project",
+            "-p",
+            help="Project name/ID within the organization (overrides context)",
+        ),
+    ] = None,
 ) -> None:
     """Analyze an Odoo addon for quality issues.
 
     Uploads the addon to https://qualidoo.com for analysis and displays results.
+    Use --org and --project to attribute the scan to a specific project.
     """
     # Check for API key
     api_key = get_api_key()
@@ -208,12 +229,37 @@ def check(
         print_error(f"Not a valid Odoo addon: missing __manifest__.py in {path}")
         raise typer.Exit(1)
 
+    # Resolve project_id from options or context
+    project_id: str | None = None
+    project_display_name: str | None = None
+    context = get_context()
+
     try:
         with QualidooClient(api_key=api_key) as client:
+            # Resolve org/project names to IDs if specified
+            if org or project:
+                console.print("Resolving organization/project...", end=" ")
+                try:
+                    resolved = resolve_org_project(client, org, project)
+                    project_id = resolved.project_id
+                    project_display_name = resolved.project_name
+                    console.print("[green]OK[/green]")
+                except OrgProjectResolverError as e:
+                    console.print("[red]Failed[/red]")
+                    print_error(str(e))
+                    raise typer.Exit(1)
+            elif context.has_project:
+                # Use context project
+                project_id = context.project_id
+                project_display_name = context.project_name
+
             # Upload addon
-            console.print(f"Uploading [cyan]{addon_name}[/cyan]...", end=" ")
+            context_msg = ""
+            if project_id:
+                context_msg = f" (project: {project_display_name or project_id[:12]})"
+            console.print(f"Uploading [cyan]{addon_name}[/cyan]{context_msg}...", end=" ")
             try:
-                upload_result = client.upload_addon(path)
+                upload_result = client.upload_addon(path, project_id=project_id)
             except AuthenticationError:
                 console.print("[red]Failed[/red]")
                 print_error("Authentication failed. Run 'qualidoo login' to reconfigure.")

@@ -1,11 +1,16 @@
 """Formatted terminal output for Qualidoo CLI using rich."""
 
-from typing import Any
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
+
+if TYPE_CHECKING:
+    from qualidoo.config import OrgProjectContext
 
 console = Console()
 
@@ -542,3 +547,95 @@ def print_repo_results(
         "[dim]View full reports on your dashboard:[/dim] "
         "[link=https://qualidoo.com/dashboard]https://qualidoo.com/dashboard[/link]"
     )
+
+
+# =============================================================================
+# Organization & Project Output
+# =============================================================================
+
+
+def print_organizations(
+    organizations: list[dict[str, Any]],
+    context: "OrgProjectContext",
+) -> None:
+    """Print organizations and their projects in a tree-like format."""
+    if not organizations:
+        console.print("[dim]No organizations found.[/dim]")
+        console.print()
+        console.print(
+            "Create an organization at: "
+            "[link=https://qualidoo.com/settings]"
+            "https://qualidoo.com/settings[/link]"
+        )
+        return
+
+    console.print("[bold]Organizations:[/bold]")
+
+    for org in organizations:
+        org_name = org.get("name", "Unknown")
+        org_id = org.get("id", "")
+        projects = org.get("projects", [])
+
+        # Check if this org is the current context
+        is_current_org = context.organization_id == org_id
+
+        # Format org line
+        org_text = Text()
+        org_text.append("  ")
+        org_text.append(org_name, style="cyan bold")
+        org_text.append(f" ({org_id[:12]}...)", style="dim")
+
+        if is_current_org and not context.has_project:
+            org_text.append(" <- current", style="yellow")
+
+        console.print(org_text)
+
+        # Print projects
+        for i, project in enumerate(projects):
+            project_name = project.get("name", "Unknown")
+            project_id = project.get("id", "")
+            is_last = i == len(projects) - 1
+
+            # Check if this project is the current context
+            is_current_project = context.project_id == project_id
+
+            prefix = "  └── " if is_last else "  ├── "
+
+            project_text = Text()
+            project_text.append(prefix, style="dim")
+            project_text.append(project_name, style="green")
+            project_text.append(f" ({project_id[:12]}...)", style="dim")
+
+            if is_current_project:
+                project_text.append(" <- current", style="yellow")
+
+            console.print(project_text)
+
+        console.print()
+
+
+def print_context(context: "OrgProjectContext") -> None:
+    """Print the current organization/project context."""
+    if not context.has_org:
+        console.print("[bold]Context:[/bold] Personal")
+        console.print("[dim]Scans are attributed to your personal history.[/dim]")
+        console.print()
+        console.print("[dim]Set a project context with 'qualidoo org use <org> --project <project>'[/dim]")
+        return
+
+    content = Text()
+    content.append("Organization: ", style="bold")
+    content.append(f"{context.organization_name}\n", style="cyan")
+
+    if context.has_project:
+        content.append("Project: ", style="bold")
+        content.append(f"{context.project_name}\n", style="green")
+
+    panel = Panel(
+        content,
+        title="[bold]Current Context[/bold]",
+        border_style="yellow",
+        padding=(0, 2),
+    )
+    console.print(panel)
+    console.print("[dim]Scans will be attributed to this project.[/dim]")

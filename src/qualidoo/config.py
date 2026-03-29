@@ -8,6 +8,7 @@ import os
 import re
 import stat
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -97,3 +98,74 @@ def get_api_url() -> str:
 def get_config_path() -> Path:
     """Get the path to the config file."""
     return CONFIG_FILE
+
+
+# =============================================================================
+# Organization/Project Context
+# =============================================================================
+
+
+@dataclass
+class OrgProjectContext:
+    """Current organization/project context for scans."""
+
+    organization_id: str | None = None
+    organization_name: str | None = None
+    project_id: str | None = None
+    project_name: str | None = None
+
+    @property
+    def has_org(self) -> bool:
+        """Check if org context is set."""
+        return self.organization_id is not None
+
+    @property
+    def has_project(self) -> bool:
+        """Check if project context is set."""
+        return self.project_id is not None
+
+    def __str__(self) -> str:
+        """Human-readable representation."""
+        if self.has_project:
+            return f"{self.organization_name} / {self.project_name}"
+        elif self.has_org:
+            return self.organization_name or self.organization_id or ""
+        return "Personal"
+
+
+def get_context() -> OrgProjectContext:
+    """Get current organization/project context from config."""
+    config = load_config()
+    context = config.get("context", {})
+
+    return OrgProjectContext(
+        organization_id=context.get("organization_id"),
+        organization_name=context.get("organization_name"),
+        project_id=context.get("project_id"),
+        project_name=context.get("project_name"),
+    )
+
+
+def set_context(
+    organization_id: str | None = None,
+    organization_name: str | None = None,
+    project_id: str | None = None,
+    project_name: str | None = None,
+) -> None:
+    """Save organization/project context to config."""
+    config = load_config()
+    config["context"] = {
+        "organization_id": organization_id,
+        "organization_name": organization_name,
+        "project_id": project_id,
+        "project_name": project_name,
+    }
+    save_config(config)
+
+
+def clear_context() -> None:
+    """Clear organization/project context from config."""
+    config = load_config()
+    if "context" in config:
+        del config["context"]
+    save_config(config)

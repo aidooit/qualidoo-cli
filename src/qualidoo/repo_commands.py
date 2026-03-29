@@ -16,8 +16,9 @@ from qualidoo.api_client import (
     QualidooClient,
     RateLimitError,
 )
-from qualidoo.config import get_api_key
+from qualidoo.config import get_api_key, get_context
 from qualidoo.github import parse_repo
+from qualidoo.org_resolver import OrgProjectResolverError, resolve_org_project
 from qualidoo.output import (
     console,
     create_repo_progress_callback,
@@ -80,8 +81,26 @@ def check_repo(
             help="Maximum time to wait for analysis (seconds)",
         ),
     ] = 600,
+    org: Annotated[
+        Optional[str],
+        typer.Option(
+            "--org",
+            "-o",
+            help="Organization name/ID to attribute scan to (overrides context)",
+        ),
+    ] = None,
+    project: Annotated[
+        Optional[str],
+        typer.Option(
+            "--project",
+            "-p",
+            help="Project name/ID within the organization (overrides context)",
+        ),
+    ] = None,
 ) -> None:
     """Analyze Odoo addons in a GitHub repository.
+
+    Use --org and --project to attribute the scans to a specific project.
 
     Examples:
 
@@ -89,7 +108,7 @@ def check_repo(
 
         qualidoo repo check https://github.com/owner/repo --branch 16.0
 
-        qualidoo repo check owner/repo --addon specific_addon
+        qualidoo repo check owner/repo --addon specific_addon --project "Backend Project"
     """
     # Check for API key
     api_key = get_api_key()
@@ -108,8 +127,30 @@ def check_repo(
     # Use URL branch if no explicit --branch option provided
     effective_branch = branch or parsed.branch
 
+    # Resolve project_id from options or context
+    project_id: str | None = None
+    project_display_name: str | None = None
+    context = get_context()
+
     try:
         with QualidooClient(api_key=api_key) as client:
+            # Resolve org/project names to IDs if specified
+            if org or project:
+                console.print("Resolving organization/project...", end=" ")
+                try:
+                    resolved = resolve_org_project(client, org, project)
+                    project_id = resolved.project_id
+                    project_display_name = resolved.project_name
+                    console.print("[green]OK[/green]")
+                except OrgProjectResolverError as e:
+                    console.print("[red]Failed[/red]")
+                    print_error(str(e))
+                    raise typer.Exit(1)
+            elif context.has_project:
+                # Use context project silently
+                project_id = context.project_id
+                project_display_name = context.project_name
+
             # Check GitHub connection
             console.print("Checking GitHub connection...", end=" ")
             try:
@@ -167,9 +208,13 @@ def check_repo(
                     raise typer.Exit(1)
 
             # Start analysis - show spinner while server prepares
+            context_msg = ""
+            if project_id:
+                context_msg = f" (project: {project_display_name or project_id[:12]})"
+
             console.print()
             with console.status(
-                "[yellow]Preparing analysis...[/yellow]",
+                f"[yellow]Preparing analysis{context_msg}...[/yellow]",
                 spinner="dots",
             ) as status:
                 try:
@@ -178,6 +223,7 @@ def check_repo(
                         branch=actual_branch,
                         addon_path=addon,
                         use_llm=False,
+                        project_id=project_id,
                     )
                 except RateLimitError:
                     status.stop()

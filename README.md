@@ -16,6 +16,7 @@ Features:
 - View results with detailed findings and recommendations
 - Save analysis results as JSON for CI/CD integration
 - Progress feedback during analysis
+- **Team tier support**: Attribute scans to organizations and teams
 
 ## Installation
 
@@ -125,6 +126,8 @@ qualidoo check [PATH] [OPTIONS]
 | `--verbose` | `-v` | Show detailed findings with file paths and suggestions |
 | `--save FILE` | `-s` | Save full JSON result to file |
 | `--timeout SECONDS` | `-t` | Maximum time to wait for analysis (default: 300) |
+| `--org TEXT` | `-o` | Organization name/ID to attribute scan to (Team tier) |
+| `--team TEXT` |  | Team name/ID within the organization (Team tier) |
 
 **Examples:**
 
@@ -140,6 +143,9 @@ qualidoo check --verbose
 
 # Save results for CI/CD
 qualidoo check --save result.json
+
+# Attribute scan to a team (Team tier)
+qualidoo check --org AidooIT --team "Backend Team"
 
 # Combine options
 qualidoo check /path/to/addon -v -s analysis.json -t 600
@@ -203,6 +209,8 @@ qualidoo repo check <REPO> [OPTIONS]
 | `--verbose` | `-v` | Show detailed output |
 | `--save FILE` | `-s` | Save results to JSON file |
 | `--timeout SECONDS` | `-t` | Maximum time to wait for analysis (default: 600) |
+| `--org TEXT` | `-o` | Organization name/ID to attribute scans to (Team tier) |
+| `--team TEXT` |  | Team name/ID within the organization (Team tier) |
 
 **Examples:**
 
@@ -221,6 +229,9 @@ qualidoo repo check owner/repo --addon account_invoice_validation
 
 # Save results for CI/CD
 qualidoo repo check owner/repo --save results.json
+
+# Attribute scans to a team (Team tier)
+qualidoo repo check owner/repo --team "Backend Team"
 
 # Combine options
 qualidoo repo check oca/account-financial-tools -b 16.0 -v -s analysis.json
@@ -251,6 +262,74 @@ The command displays:
 | HTTPS URL | `https://github.com/oca/account-financial-tools` |
 | HTTPS with .git | `https://github.com/oca/account-financial-tools.git` |
 | SSH URL | `git@github.com:oca/account-financial-tools.git` |
+
+## Team Tier Commands
+
+These commands are available for users with Team tier subscriptions. They allow you to manage organization/team context and view team-specific analytics.
+
+### `qualidoo org list`
+
+List all organizations you're a member of, with their teams.
+
+```bash
+qualidoo org list
+```
+
+**Output:**
+
+```
+Organizations:
+  AidooIT (org_abc123)
+  |-- Backend Team (team_def456) <- current
+  |-- Frontend Team (team_ghi789)
+  `-- DevOps (team_jkl012)
+
+  ClientCorp (org_mno345)
+  `-- Odoo Modules (team_pqr678)
+```
+
+### `qualidoo org use`
+
+Set the default organization and team for scans.
+
+```bash
+qualidoo org use <ORG> [OPTIONS]
+```
+
+**Options:**
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--team TEXT` | `-t` | Team name or ID within the organization |
+
+**Examples:**
+
+```bash
+# Set default organization (no team)
+qualidoo org use AidooIT
+
+# Set organization and team
+qualidoo org use AidooIT --team "Backend Team"
+qualidoo org use AidooIT -t "Backend Team"
+```
+
+Once set, all scans will be attributed to this context until you change or clear it.
+
+### `qualidoo org current`
+
+Show the current organization/team context.
+
+```bash
+qualidoo org current
+```
+
+### `qualidoo org clear`
+
+Clear the organization/team context. After clearing, scans will go to your personal history.
+
+```bash
+qualidoo org clear
+```
 
 ## Configuration
 
@@ -364,12 +443,13 @@ pytest --cov=qualidoo --cov-report=term-missing
 ```
 tests/
 ├── __init__.py
-├── conftest.py          # Shared fixtures (mock data, temp directories)
-├── test_config.py       # Configuration module tests (~22 tests)
-├── test_api_client.py   # API client tests (~34 tests)
-├── test_output.py       # Output formatting tests (~25 tests)
-├── test_cli.py          # CLI command tests (~21 tests)
-└── test_github.py       # GitHub URL parsing tests (~14 tests)
+├── conftest.py           # Shared fixtures (mock data, temp directories)
+├── test_config.py        # Configuration module tests (~22 tests)
+├── test_api_client.py    # API client tests (~34 tests)
+├── test_output.py        # Output formatting tests (~25 tests)
+├── test_cli.py           # CLI command tests (~21 tests)
+├── test_github.py        # GitHub URL parsing tests (~14 tests)
+└── test_org_commands.py  # Organization commands tests
 ```
 
 ### Test Coverage
