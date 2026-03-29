@@ -14,6 +14,15 @@ def valid_api_key() -> str:
 
 
 @pytest.fixture
+def valid_api_key_with_urlsafe_chars() -> str:
+    """Return a valid API key with URL-safe Base64 characters (- and _).
+
+    This matches what secrets.token_urlsafe() produces on the server.
+    """
+    return "qdoo_wPLmncWfAt4m3auiQEzm4L_T_Std7b6x"
+
+
+@pytest.fixture
 def invalid_api_keys() -> list[str]:
     """Return a list of invalid API key formats."""
     return [
@@ -21,7 +30,6 @@ def invalid_api_keys() -> list[str]:
         "invalid",
         "qdoo",
         "qdoo_",
-        "qdoo_short",  # Too short
         "api_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6",  # Wrong prefix
         "QDOO_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6",  # Wrong case prefix
     ]

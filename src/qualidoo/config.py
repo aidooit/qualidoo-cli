@@ -5,7 +5,6 @@ Supports QUALIDOO_API_KEY environment variable override.
 """
 
 import os
-import re
 import stat
 import sys
 from dataclasses import dataclass
@@ -22,7 +21,6 @@ import tomli_w
 CONFIG_DIR = Path.home() / ".qualidoo"
 CONFIG_FILE = CONFIG_DIR / "config.toml"
 API_KEY_PREFIX = "qdoo_"
-API_KEY_PATTERN = re.compile(r"^qdoo_[a-zA-Z0-9]{32,}$")
 
 DEFAULT_API_URL = "https://qualidoo.com"
 
@@ -86,8 +84,13 @@ def remove_api_key() -> bool:
 
 
 def validate_api_key_format(api_key: str) -> bool:
-    """Validate API key format (should start with 'qdoo_' and have valid characters)."""
-    return bool(API_KEY_PATTERN.match(api_key))
+    """Validate API key format (should start with 'qdoo_').
+
+    Aligned with server-side validation which only checks prefix,
+    then does a DB hash lookup. Keys use secrets.token_urlsafe()
+    which produces URL-safe Base64: A-Z, a-z, 0-9, -, _
+    """
+    return api_key.startswith(API_KEY_PREFIX) and len(api_key) > len(API_KEY_PREFIX)
 
 
 def get_api_url() -> str:

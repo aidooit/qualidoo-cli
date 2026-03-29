@@ -22,6 +22,25 @@ class TestValidateApiKeyFormat:
         key = "qdoo_" + "a" * 64
         assert config.validate_api_key_format(key) is True
 
+    def test_valid_key_with_underscore(self):
+        """Test that a key with underscore passes validation (URL-safe Base64)."""
+        key = "qdoo_wPLmncWfAt4m3auiQEzm4L_T_Std7b6x"
+        assert config.validate_api_key_format(key) is True
+
+    def test_valid_key_with_hyphen(self):
+        """Test that a key with hyphen passes validation (URL-safe Base64)."""
+        key = "qdoo_wPLmncWfAt4m3aui-Ezm4L-Std7b6x"
+        assert config.validate_api_key_format(key) is True
+
+    def test_valid_key_with_mixed_urlsafe_chars(self):
+        """Test that a key with both underscore and hyphen passes validation."""
+        key = "qdoo_ABC-def_123-XYZ_abc-789_xyz"
+        assert config.validate_api_key_format(key) is True
+
+    def test_valid_key_short_but_has_content(self):
+        """Test that short keys with content after prefix pass validation."""
+        assert config.validate_api_key_format("qdoo_x") is True
+
     def test_invalid_empty(self):
         """Test that an empty string fails validation."""
         assert config.validate_api_key_format("") is False
@@ -37,14 +56,6 @@ class TestValidateApiKeyFormat:
     def test_invalid_uppercase_prefix(self):
         """Test that uppercase prefix fails."""
         assert config.validate_api_key_format("QDOO_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6") is False
-
-    def test_invalid_too_short(self):
-        """Test that a key that's too short fails."""
-        assert config.validate_api_key_format("qdoo_short") is False
-
-    def test_invalid_special_chars(self):
-        """Test that a key with special characters fails."""
-        assert config.validate_api_key_format("qdoo_a1b2c3d4e5f6g7h8i9j0k1l2m3n4!@#$") is False
 
     def test_invalid_just_prefix(self):
         """Test that just the prefix fails."""
