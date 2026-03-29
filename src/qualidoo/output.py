@@ -83,13 +83,19 @@ def print_info(message: str) -> None:
     console.print(f"[dim]{message}[/dim]")
 
 
-def print_analysis_result(result: dict[str, Any], addon_name: str, verbose: bool = False) -> None:
+def print_analysis_result(
+    result: dict[str, Any],
+    addon_name: str,
+    verbose: bool = False,
+    history_id: str | None = None,
+) -> None:
     """Print formatted analysis result.
 
     Args:
         result: Analysis result dict from API.
         addon_name: Name of the analyzed addon.
         verbose: If True, show detailed findings with file paths and suggestions.
+        history_id: Optional history ID for direct link to the analysis report.
     """
     overall_score = result.get("overall_score", 0)
     grade = get_grade_from_score(overall_score)
@@ -231,10 +237,14 @@ def print_analysis_result(result: dict[str, Any], addon_name: str, verbose: bool
             console.print()
 
     # Dashboard link
-    console.print(
-        "[dim]View the full report on your dashboard:[/dim] "
-        "[link=https://qualidoo.com]https://qualidoo.com/dashboard[/link]"
-    )
+    if history_id:
+        url = f"https://qualidoo.com/?history={history_id}"
+        console.print(f"[dim]View the full report:[/dim] [link={url}]{url}[/link]")
+    else:
+        console.print(
+            "[dim]View the full report on your dashboard:[/dim] "
+            "[link=https://qualidoo.com/dashboard]https://qualidoo.com/dashboard[/link]"
+        )
     console.print()
 
 

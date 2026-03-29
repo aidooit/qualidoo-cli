@@ -304,7 +304,8 @@ def check(
                 progress_cb.stop()
 
             console.print()
-            print_analysis_result(result, addon_name, verbose=verbose)
+            history_id = result.get("history_id")
+            print_analysis_result(result, addon_name, verbose=verbose, history_id=history_id)
 
             # Save JSON result if requested
             if save:
