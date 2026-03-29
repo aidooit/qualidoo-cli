@@ -127,8 +127,14 @@ def check_repo(
     # Use URL branch if no explicit --branch option provided
     effective_branch = branch or parsed.branch
 
-    # Resolve project_id from options or context
+    # Validate --project is required with --org
+    if org and not project:
+        print_error("--project is required when --org is specified")
+        raise typer.Exit(1)
+
+    # Resolve project_id and organization_id from options or context
     project_id: str | None = None
+    organization_id: str | None = None
     project_display_name: str | None = None
     context = get_context()
 
@@ -140,6 +146,7 @@ def check_repo(
                 try:
                     resolved = resolve_org_project(client, org, project)
                     project_id = resolved.project_id
+                    organization_id = resolved.organization_id
                     project_display_name = resolved.project_name
                     console.print("[green]OK[/green]")
                 except OrgProjectResolverError as e:
@@ -149,6 +156,7 @@ def check_repo(
             elif context.has_project:
                 # Use context project silently
                 project_id = context.project_id
+                organization_id = context.organization_id
                 project_display_name = context.project_name
 
             # Check GitHub connection
@@ -224,6 +232,7 @@ def check_repo(
                         addon_path=addon,
                         use_llm=False,
                         project_id=project_id,
+                        organization_id=organization_id,
                     )
                 except RateLimitError:
                     status.stop()

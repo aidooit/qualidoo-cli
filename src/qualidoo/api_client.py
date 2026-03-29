@@ -62,7 +62,7 @@ class QualidooClient:
     def client(self) -> httpx.Client:
         """Get or create HTTP client."""
         if self._client is None:
-            headers = {"User-Agent": "qualidoo-cli/0.2.0"}
+            headers = {"User-Agent": "qualidoo-cli/0.5.2"}
             if self.api_key:
                 headers["X-API-Key"] = self.api_key
             self._client = httpx.Client(
@@ -147,12 +147,14 @@ class QualidooClient:
         self,
         addon_path: Path,
         project_id: str | None = None,
+        organization_id: str | None = None,
     ) -> dict[str, Any]:
         """Upload an addon for analysis.
 
         Args:
             addon_path: Path to the addon directory.
             project_id: Optional project ID to attribute the scan to.
+            organization_id: Optional organization ID to attribute the scan to.
 
         Returns:
             Dict containing job_id and other info.
@@ -182,14 +184,16 @@ class QualidooClient:
 
         zip_buffer.seek(0)
 
-        # Build params
-        params: dict[str, str] = {"client": "cli"}
+        # Build form data (backend expects Form fields, not query params)
+        data: dict[str, str] = {"client": "cli"}
         if project_id:
-            params["project_id"] = project_id
+            data["project_id"] = project_id
+        if organization_id:
+            data["organization_id"] = organization_id
 
         # Upload (with client=cli to identify CLI uploads)
         files = {"file": (f"{addon_name}.zip", zip_buffer, "application/zip")}
-        response = self.client.post("/api/v1/analyze/upload", files=files, params=params)
+        response = self.client.post("/api/v1/analyze/upload", files=files, data=data)
         return self._handle_response(response)
 
     def _should_skip_file(self, file_path: Path) -> bool:
@@ -333,6 +337,7 @@ class QualidooClient:
         addon_path: str | None = None,
         use_llm: bool = False,
         project_id: str | None = None,
+        organization_id: str | None = None,
     ) -> dict[str, Any]:
         """Start analysis of addons in a GitHub repository.
 
@@ -342,6 +347,7 @@ class QualidooClient:
             addon_path: Specific addon path to analyze, or all if None.
             use_llm: Enable LLM-enhanced analysis.
             project_id: Optional project ID to attribute scans to.
+            organization_id: Optional organization ID to attribute scans to.
 
         Returns:
             Dict with 'scan_id' and 'total_addons' fields.
@@ -358,6 +364,8 @@ class QualidooClient:
         payload["use_llm"] = use_llm
         if project_id:
             payload["project_id"] = project_id
+        if organization_id:
+            payload["organization_id"] = organization_id
 
         response = self.client.post("/api/v1/cli/github/analyze", json=payload)
         return self._handle_response(response)

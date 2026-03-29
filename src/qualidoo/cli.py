@@ -229,8 +229,14 @@ def check(
         print_error(f"Not a valid Odoo addon: missing __manifest__.py in {path}")
         raise typer.Exit(1)
 
-    # Resolve project_id from options or context
+    # Validate --project is required with --org
+    if org and not project:
+        print_error("--project is required when --org is specified")
+        raise typer.Exit(1)
+
+    # Resolve project_id and organization_id from options or context
     project_id: str | None = None
+    organization_id: str | None = None
     project_display_name: str | None = None
     context = get_context()
 
@@ -242,6 +248,7 @@ def check(
                 try:
                     resolved = resolve_org_project(client, org, project)
                     project_id = resolved.project_id
+                    organization_id = resolved.organization_id
                     project_display_name = resolved.project_name
                     console.print("[green]OK[/green]")
                 except OrgProjectResolverError as e:
@@ -251,6 +258,7 @@ def check(
             elif context.has_project:
                 # Use context project
                 project_id = context.project_id
+                organization_id = context.organization_id
                 project_display_name = context.project_name
 
             # Upload addon
@@ -259,7 +267,11 @@ def check(
                 context_msg = f" (project: {project_display_name or project_id[:12]})"
             console.print(f"Uploading [cyan]{addon_name}[/cyan]{context_msg}...", end=" ")
             try:
-                upload_result = client.upload_addon(path, project_id=project_id)
+                upload_result = client.upload_addon(
+                    path,
+                    project_id=project_id,
+                    organization_id=organization_id,
+                )
             except AuthenticationError:
                 console.print("[red]Failed[/red]")
                 print_error("Authentication failed. Run 'qualidoo login' to reconfigure.")
