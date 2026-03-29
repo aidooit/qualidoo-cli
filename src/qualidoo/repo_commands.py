@@ -127,7 +127,7 @@ def check_repo(
                 console.print("[red]Not connected[/red]")
                 print_error(
                     "GitHub not connected. "
-                    "Connect at qualidoo.aidooit.com/settings/integrations"
+                    "Connect at https://qualidoo.com/settings Integrations tab."
                 )
                 raise typer.Exit(1)
 

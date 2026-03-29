@@ -23,7 +23,7 @@ CONFIG_FILE = CONFIG_DIR / "config.toml"
 API_KEY_PREFIX = "qdoo_"
 API_KEY_PATTERN = re.compile(r"^qdoo_[a-zA-Z0-9]{32,}$")
 
-DEFAULT_API_URL = "https://qualidoo.aidooit.com"
+DEFAULT_API_URL = "https://qualidoo.com"
 
 
 def ensure_config_dir() -> None:

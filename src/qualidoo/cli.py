@@ -61,11 +61,11 @@ def login(
 ) -> None:
     """Configure API key for authentication.
 
-    Get your API key from https://qualidoo.aidooit.com/settings
+    Get your API key from https://qualidoo.com/settings
     """
     # Prompt for key if not provided
     if not api_key:
-        console.print("Get your API key from: [link=https://qualidoo.aidooit.com/settings]https://qualidoo.aidooit.com/settings[/link]")
+        console.print("Get your API key from: [link=https://qualidoo.com/settings]https://qualidoo.com/settings[/link] API Keys tab.")
         console.print()
         api_key = typer.prompt("Enter your API key", hide_input=True)
 
@@ -188,7 +188,7 @@ def check(
 ) -> None:
     """Analyze an Odoo addon for quality issues.
 
-    Uploads the addon to qualidoo.aidooit.com for analysis and displays results.
+    Uploads the addon to https://qualidoo.com for analysis and displays results.
     """
     # Check for API key
     api_key = get_api_key()

@@ -91,19 +91,34 @@ def print_analysis_result(result: dict[str, Any], addon_name: str, verbose: bool
     grade_label = get_grade_label(overall_score)
     grade_color = GRADE_COLORS.get(grade, "white")
 
+    # Check for baseline violations
+    baseline_violation = result.get("baseline_violation", False)
+    baseline_violations = result.get("baseline_violations", [])
+
     # Summary panel
     summary = Text()
     summary.append(f"Score: ", style="bold")
     summary.append(f"{overall_score:.1f}/100", style=grade_color)
     summary.append(f" ({grade_label})", style="dim")
 
+    # Override border color if baseline violation
+    border_style = "bold red" if baseline_violation else grade_color
+
     panel = Panel(
         summary,
         title=f"[bold]{addon_name}[/bold]",
-        border_style=grade_color,
+        border_style=border_style,
         padding=(0, 2),
     )
     console.print(panel)
+
+    # Show baseline violation warning
+    if baseline_violation:
+        console.print()
+        console.print("[bold red]!! BASELINE VIOLATION !![/bold red]")
+        for violation in baseline_violations:
+            console.print(f"  [red]- {violation}[/red]")
+
     console.print()
 
     # Agent scores table
@@ -213,7 +228,7 @@ def print_analysis_result(result: dict[str, Any], addon_name: str, verbose: bool
     # Dashboard link
     console.print(
         "[dim]View the full report on your dashboard:[/dim] "
-        "[link=https://qualidoo.aidooit.com]https://qualidoo.aidooit.com[/link]"
+        "[link=https://qualidoo.com]https://qualidoo.com/dashboard[/link]"
     )
     console.print()
 
@@ -317,8 +332,8 @@ def print_integrations(integrations: list[dict[str, Any]]) -> None:
         console.print()
         console.print(
             "Connect GitHub at: "
-            "[link=https://qualidoo.aidooit.com/settings/integrations]"
-            "qualidoo.aidooit.com/settings/integrations[/link]"
+            "[link=https://qualidoo.com/settings]"
+            "https://qualidoo.com/settings[/link] Integrations tab."
         )
         return
 
@@ -504,6 +519,19 @@ def print_repo_results(
         console.print(f"[bold]Score range:[/bold] {min_score} - {max_score}")
         console.print()
 
+    # Check for baseline violations
+    violated_addons = [
+        r.get("name", "unknown")
+        for r in results
+        if r.get("baseline_violation", False)
+    ]
+    if violated_addons:
+        console.print("[bold red]!! BASELINE VIOLATIONS !![/bold red]")
+        console.print("[red]The following addons violate project baseline rules:[/red]")
+        for addon_name in violated_addons:
+            console.print(f"  [red]- {addon_name}[/red]")
+        console.print()
+
     # Verbose mode: show per-addon details
     if verbose:
         console.print("[dim]Use 'qualidoo history' to view detailed results for each addon.[/dim]")
@@ -512,5 +540,5 @@ def print_repo_results(
     # Dashboard link
     console.print(
         "[dim]View full reports on your dashboard:[/dim] "
-        "[link=https://qualidoo.aidooit.com]https://qualidoo.aidooit.com[/link]"
+        "[link=https://qualidoo.com/dashboard]https://qualidoo.com/dashboard[/link]"
     )

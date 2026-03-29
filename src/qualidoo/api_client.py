@@ -98,7 +98,7 @@ class QualidooClient:
                 detail = ""
             if "tier" in detail.lower() or "subscription" in detail.lower():
                 raise ForbiddenError(
-                    "API access requires Pro subscription. Upgrade at qualidoo.aidooit.com",
+                    "API access requires Pro subscription. Upgrade at https://qualidoo.com",
                     status_code=403,
                 )
             raise ForbiddenError(f"Access forbidden: {detail}", status_code=403)
@@ -116,7 +116,19 @@ class QualidooClient:
                 detail = response.text
             raise APIError(f"API error: {detail}", status_code=response.status_code)
 
-        return response.json()
+        # Parse JSON response
+        try:
+            result = response.json()
+        except Exception as e:
+            raise APIError(f"Invalid response from server: {e}", status_code=response.status_code)
+
+        if result is None:
+            raise APIError(
+                "Empty response from server. The server may need to be updated.",
+                status_code=response.status_code,
+            )
+
+        return result
 
     def validate_key(self) -> dict[str, Any]:
         """Validate the API key by calling /api/v1/auth/me.

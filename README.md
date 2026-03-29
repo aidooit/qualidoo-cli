@@ -8,7 +8,7 @@
 
 ## Overview
 
-Qualidoo CLI is a command-line tool for analyzing Odoo addon quality. It uploads your addon to qualidoo.aidooit.com for analysis and displays results directly in your terminal.
+Qualidoo CLI is a command-line tool for analyzing Odoo addon quality. It uploads your addon to https://qualidoo.com for analysis and displays results directly in your terminal.
 
 Features:
 - Analyze addons from any directory
@@ -26,7 +26,7 @@ pip install qualidoo
 ## Quick Start
 
 ```bash
-# 1. Configure your API key (get it from https://qualidoo.aidooit.com/settings)
+# 1. Configure your API key (get it from https://qualidoo.com/settings)
 qualidoo login
 
 # 2. Analyze an addon
@@ -43,7 +43,7 @@ The CLI requires an API key from your Qualidoo account. API access is available 
 
 ### Getting an API Key
 
-1. Visit https://qualidoo.aidooit.com/settings
+1. Visit https://qualidoo.com/settings
 2. Generate a new API key (format: `qdoo_xxxxxxxxxxxx`)
 3. Run `qualidoo login` and enter your key
 
@@ -178,7 +178,7 @@ Show connected integrations (GitHub, etc.).
 qualidoo integrations
 ```
 
-Displays the status of your connected integrations. GitHub must be connected via the web UI at https://qualidoo.aidooit.com/settings/integrations before using `qualidoo repo` commands.
+Displays the status of your connected integrations. GitHub must be connected via the web UI at https://qualidoo.com/settings Integrations tab before using `qualidoo repo` commands.
 
 ### `qualidoo repo check`
 
@@ -230,7 +230,7 @@ qualidoo repo check oca/account-financial-tools -b 16.0 -v -s analysis.json
 
 Before using `qualidoo repo check`, you must connect your GitHub account:
 
-1. Visit https://qualidoo.aidooit.com/settings/integrations
+1. Visit https://qualidoo.com/settings `Integrations` Tab
 2. Click "Connect GitHub"
 3. Authorize Qualidoo to access your repositories
 4. Verify connection with `qualidoo integrations`
@@ -275,7 +275,7 @@ api_key = "qdoo_your_api_key_here"
 | Variable | Description |
 |----------|-------------|
 | `QUALIDOO_API_KEY` | API key (overrides config file) |
-| `QUALIDOO_API_URL` | API URL (default: https://qualidoo.aidooit.com) |
+| `QUALIDOO_API_URL` | API URL (default: https://qualidoo.com) |
 
 ## CI/CD Integration
 
@@ -306,7 +306,7 @@ Use the CLI in your CI/CD pipeline to enforce quality standards:
 | "Rate limit exceeded" | Too many API requests | Wait and try again later |
 | "Not a valid Odoo addon" | Missing `__manifest__.py` | Ensure path points to valid addon |
 | "Analysis timed out" | Server processing took too long | Increase `--timeout` or try again |
-| "GitHub not connected" | No GitHub integration | Connect at qualidoo.aidooit.com/settings/integrations |
+| "GitHub not connected" | No GitHub integration | Connect at https://qualidoo.com/settings Integrations tab |
 | "Repository not found" | Invalid repo or no access | Check repo name and GitHub permissions |
 | "No Odoo addons found" | Repo has no `__manifest__.py` files | Ensure repo contains Odoo addons |
 | "Addon not found in repository" | Specified addon doesn't exist | Check addon name with `--verbose` |

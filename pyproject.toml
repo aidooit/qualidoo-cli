@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "qualidoo"
-version = "0.3.1"
+version = "0.4.0"
 description = "AI-powered Odoo addon quality analyzer"
 readme = "README.md"
 license = "MIT"
@@ -33,7 +33,7 @@ dependencies = [
 qualidoo = "qualidoo.cli:app"
 
 [project.urls]
-Homepage = "https://qualidoo.aidooit.com"
+Homepage = "https://qualidoo.com"
 Repository = "https://github.com/aidooit/qualidoo"
 
 [project.optional-dependencies]
