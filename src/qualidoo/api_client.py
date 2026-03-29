@@ -62,7 +62,7 @@ class QualidooClient:
     def client(self) -> httpx.Client:
         """Get or create HTTP client."""
         if self._client is None:
-            headers = {"User-Agent": "qualidoo-cli/0.5.4"}
+            headers = {"User-Agent": "qualidoo-cli/0.5.5"}
             if self.api_key:
                 headers["X-API-Key"] = self.api_key
             self._client = httpx.Client(
@@ -192,7 +192,7 @@ class QualidooClient:
             data["organization_id"] = organization_id
 
         # Upload (with client=cli to identify CLI uploads)
-        files = {"file": (addon_name, zip_buffer, "application/zip")}
+        files = {"file": (f"{addon_name}.zip", zip_buffer, "application/zip")}
         response = self.client.post("/api/v1/analyze/upload", files=files, data=data)
         return self._handle_response(response)
 
