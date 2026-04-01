@@ -621,6 +621,13 @@ def print_organizations(
 
             console.print(project_text)
 
+        if not projects:
+            # Show message for organizations with no projects
+            no_projects_text = Text()
+            no_projects_text.append("  └── ", style="dim")
+            no_projects_text.append("No projects created yet", style="dim italic")
+            console.print(no_projects_text)
+
         console.print()
 
 
